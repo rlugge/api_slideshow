@@ -1,0 +1,24 @@
+This is a 'living slideshow' of code for the purposes of demonstrating various concepts regarding programming an API in Ruby on Rails.  This slideshow is aimed primarily and specifically at an API-only construct but can be used in conjuction with other techniques to build a more fully featured side.  Please check out the commits at various stages to view the various states of the app and the information that should be gleaned from each of them.
+
+===========
+
+This is the base state of the API.  You should be starting here if you're using this as a code-based slideshow.
+
+Details worth noting are the use of a seperate API controller from the primary application controller.  This makes it easier to seperate your application's web-browser 'face' from it's API face, including seperating various pieces of logic.  If you're goal is to have a management portal seperate from the API usage, this is perfect.  If your goal is to reproduce your web facing version in your API, you're going to get code duplication -- results may therefore vary.
+
+So lets get started!
+
+You'll need to create a user & a session manually -- do this however you prefer, but hte relevant models are User and session.  Next, try throwing a 'GET' request to the /api/v1/random route.  You'll get a rather unhelpful message about HTTP Token: Access denied.  It's an absolutely valid message, yes, but there are several issues with this particular message.  Most notable is the fact that while it's 100% human readable, it's not in the format you might have requested.  The following request:
+
+PUT /api/v1/random HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+Authorization: token 1234567890
+Accept: application/json
+Cache-Control: no-cache
+
+{"seed":1}
+
+Will result in a 401 response with a content-type header of text/html, which precisely matches with the body of 'HTTP Token: Access denied.'  Problem is, that's not what we asked for or want!  It also doesn't help us catch a rather non-obvious issue that makes it impossible for us to authenticate with that request.  What issue?  You'll see soon!
+
+Please check out the next readme in the process.
