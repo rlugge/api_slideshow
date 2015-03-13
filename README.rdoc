@@ -2,34 +2,11 @@ This is a 'living slideshow' of code for the purposes of demonstrating various c
 
 ===========
 
-OK, we're generating and catching one exception.  But what happens if someone passes an invalid token in?
+Oh, wait -- if you've been writing tests, doing requests, or just plain paying attention, you might have spotted an issue.
 
-Well, currently we're exposing that second exception.  We need to fix that, so lets add this rescue lock in:
+Our first two error states return the same message!  Lets go ahead and break them apart a bit.  Add the following two exception classes to your api_controller:
 
-rescue_from Exception do |exception|
-	error={
-	  :exception=>exception.message
-	}
-	render json:error, :status=>500
-end
+  class InvalidAuthorizationToken < Unauthenticated; end
+  class MissingAuthorizationToken < Unauthenticated; end
 
-There, now we're catching every possible exception and telling the user what happened, as best we can.
-
-Still, lets fix the exception -- or at least, provide more valid feedback to the user instead of a code error.
-
-Our authentication system has three steps:
-
-1) Check if the user provided a token
-2) Validate that token
-3) Proceed with request
-
-Lets explicitly Catch that second error by changing authenticate as follows:
-
-  def authenticate!
-    authenticate_with_http_token do |token, options|
-      session=Session.where(:token=>token).first
-      raise Unauthenticated.new unless session
-      @current_user=session.user
-    end
-    raise Unauthenticated.new unless @current_user
-  end
+Now, change our single rescue_from block into a set of three.  Define your own error messages, but you want to catch each of the three distinct possibilities.  Invalid token, missing token, and simply unauthenticated.  While we currently don't do anything with that class other than subclass it, my opinion on good practices is that you should still have a base catcher for it, just in case you later add a third subclass to it.  Otherwise, when you start throwing SessionAgedOut unauthentication exceptions, you aren't going to know why you're getting a 500 error!  At least htis way, you'll *know* it's your authentication scheme failing.
