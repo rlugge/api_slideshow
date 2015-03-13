@@ -2,20 +2,12 @@ This is a 'living slideshow' of code for the purposes of demonstrating various c
 
 ===========
 
-As currently constituted, failed authentication will throw a rather useless error message or -- worse yet -- throw an uncaught exception if you give it an invalid token.
+OK, we're providing an exception.  But we're still returning HTML -- and for security reasons, you should *never* expose your application's exceptions to the great wide web!  So lets improve matters a little, and catch the exception instead.
 
-Go open up app/controllers/api/v1/api_controller.rb -- this file is where we're going to be doing most of our work today.  Now, lets improve that error message to make it more readable.  The authenticate! method uses the built-in rails method authenticate_or_request_with_http_token.  If you return a truthy value from it, execution continues.  If you return a falsey value or the authorization token header is missing, it terminates processing and gives us that rather useless error message.
+Add the following code to your applicaiton controller -- I recommend right after the before_filter :authenticate! line but before you actually define the filter.
 
-So lets fix this.
+rescue_from Unauthenticated do |exception|
+    render json: { error: "System cannot authenticate you without a valid token based authentication header."}
+  end
 
-First, we're going to replace our call to authenticate_or_request_with_http_token to authenticate_with_http_token.  Doesn't give us the ugly error message anymore... but neither does it return a 401 status code if we don't have a login value.
-
-Add the following class definition to the API controller -- I recommend right at the top, right above protect_from_forgery.
-
-class Unauthenticated < StandardError; end
-
-Now, at the bottom of hte authenticate method, add:
-
-raise Unauthenticated.new unless @current_user
-
-Yay, now we're getting something halfway useful -- we might not know why we're getting the exception, but we know that it's being triggered from outside of the authentication block.  A little digging, and you'll rapidly realize you're never getting into the authentication block...  Because the Authorization: token header is actually supposed to be Authorization: Token.  A capital T is all you needed (along with a valid token, of course).
+BAM!  Your system is now explaining to the end user *exactly* what is going wrong!
