@@ -2,12 +2,34 @@ This is a 'living slideshow' of code for the purposes of demonstrating various c
 
 ===========
 
-OK, we're providing an exception.  But we're still returning HTML -- and for security reasons, you should *never* expose your application's exceptions to the great wide web!  So lets improve matters a little, and catch the exception instead.
+OK, we're generating and catching one exception.  But what happens if someone passes an invalid token in?
 
-Add the following code to your applicaiton controller -- I recommend right after the before_filter :authenticate! line but before you actually define the filter.
+Well, currently we're exposing that second exception.  We need to fix that, so lets add this rescue lock in:
 
-rescue_from Unauthenticated do |exception|
-    render json: { error: "System cannot authenticate you without a valid token based authentication header."}
+rescue_from Exception do |exception|
+	error={
+	  :exception=>exception.message
+	}
+	render json:error, :status=>500
+end
+
+There, now we're catching every possible exception and telling the user what happened, as best we can.
+
+Still, lets fix the exception -- or at least, provide more valid feedback to the user instead of a code error.
+
+Our authentication system has three steps:
+
+1) Check if the user provided a token
+2) Validate that token
+3) Proceed with request
+
+Lets explicitly Catch that second error by changing authenticate as follows:
+
+  def authenticate!
+    authenticate_with_http_token do |token, options|
+      session=Session.where(:token=>token).first
+      raise Unauthenticated.new unless session
+      @current_user=session.user
+    end
+    raise Unauthenticated.new unless @current_user
   end
-
-BAM!  Your system is now explaining to the end user *exactly* what is going wrong!
