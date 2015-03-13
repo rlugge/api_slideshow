@@ -2,15 +2,8 @@ This is a 'living slideshow' of code for the purposes of demonstrating various c
 
 ===========
 
-Our authenticate! method is getting a little ugly, with our logic jumping all over the place.  Lets take a look at it and see if we can't improve it a bit.  Our first move should be to check the token, and we shoudl fail right there if it's missing.  We shouldn't make our fellow programmers jump to the end of the method to see we're throwing an error over it eing missing, after all!
+As you develop and test your app, you should see an entire series of possible exceptions rise.  While rails will usually raise the appropriate error codes for them, you should still consider catching them yourself to improve it's default handling.  This basic idea isn't just applied to APIs, you can use this to catch and prevent the default rails error.  This can be used in the classic Twitter Fail Whale scenario, or to at least preserve your branding rather than displaying the rails branding.  Please, don't let your users blame rails for your own mistakes!  And of course, no security-concious individual should ever reveal that blatantly that yes, this is a rails website if they don't have to... even though the hacker can probably figure it out themselves.
 
-So, lets try the following:
+That said, catching and swallowing Exception is not the way to do it.  My rescue_from Exception is a worst-practices example.  You don't only catch things that should be caught this way, but because Exception is the absolute root of the exception heirarchy you wind up catching everything including things that should not be caught.  For example, Syntax Errors and signals.  You could, with a little bit of carelessness, write an app that cannot be stopped short of a sigkill -- the absolute worst-case, the OS must kill the app signal.  This is bad.
 
-  def authenticate!
-    token=authenticate_with_http_token { |token| token }
-    session=Session.where(:token=>token).first
-    raise MissingAuthorizationToken.new unless session
-    @current_user=session.user
-    raise InvalidAuthorizationToken.new unless @current_user
-  end
-
+Instead, lets write a quick method called 'text_admin'.  Add that to the controller, and then change the rescue_from Exception to rescue_from ActiveRecord::NoDatabaseError.  Next time your database goes down, boom, you'll get a text message.  Hopefully not while your doing something important, like sleeping.
