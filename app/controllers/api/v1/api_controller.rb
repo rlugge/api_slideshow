@@ -25,12 +25,11 @@ class Api::V1::ApiController < ApplicationController
   end
 
   def authenticate!
-    authenticate_with_http_token do |token, options|
-      session=Session.where(:token=>token).first
-      raise InvalidAuthorizationToken.new unless session
-      @current_user=session.user
-    end
-    raise MissingAuthorizationToken.new unless @current_user
+    token=authenticate_with_http_token { |token| token }
+    raise MissingAuthorizationToken.new unless token
+    session=Session.where(:token=>token).first
+    raise InvalidAuthorizationToken.new unless session && session.current_user
+    @current_user=session.user
   end
 
   def current_user
