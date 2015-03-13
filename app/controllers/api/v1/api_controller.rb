@@ -5,6 +5,11 @@ class Api::V1::ApiController < ApplicationController
   protect_from_forgery with: :null_session
   before_filter :authenticate!
 
+  rescue_from Exception do |exception|
+    text_admin(exception.message)
+    raise exception
+  end
+
   rescue_from ActiveRecord::NoDatabaseError do |exception|
     text_admin(exception.message)
     render json:{ error: "System down, sorry for the inconvienience!" }, :status=>500

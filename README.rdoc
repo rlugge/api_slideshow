@@ -2,8 +2,13 @@ This is a 'living slideshow' of code for the purposes of demonstrating various c
 
 ===========
 
-As you develop and test your app, you should see an entire series of possible exceptions rise.  While rails will usually raise the appropriate error codes for them, you should still consider catching them yourself to improve it's default handling.  This basic idea isn't just applied to APIs, you can use this to catch and prevent the default rails error.  This can be used in the classic Twitter Fail Whale scenario, or to at least preserve your branding rather than displaying the rails branding.  Please, don't let your users blame rails for your own mistakes!  And of course, no security-concious individual should ever reveal that blatantly that yes, this is a rails website if they don't have to... even though the hacker can probably figure it out themselves.
+Lets assume you're completely and utterly paranoid, and really want to know if your server goes down for any reason.
 
-That said, catching and swallowing Exception is not the way to do it.  My rescue_from Exception is a worst-practices example.  You don't only catch things that should be caught this way, but because Exception is the absolute root of the exception heirarchy you wind up catching everything including things that should not be caught.  For example, Syntax Errors and signals.  You could, with a little bit of carelessness, write an app that cannot be stopped short of a sigkill -- the absolute worst-case, the OS must kill the app signal.  This is bad.
+This is actually a good time to catch exception, just remember that you need to re-raise it.  You're going to need to be clever about how you do this, or you're going to get hit with text messages every five seconds, but if you catch exceptions explicitly and consistently you could do this.  I strongly recomend, however, that you set up an midway server to manage this process so that the texts are rate-limited rather than spamming you constantly.
 
-Instead, lets write a quick method called 'text_admin'.  Add that to the controller, and then change the rescue_from Exception to rescue_from ActiveRecord::NoDatabaseError.  Next time your database goes down, boom, you'll get a text message.  Hopefully not while your doing something important, like sleeping.
+To do this, simply catch exception, then raise it again.
+
+rescue_from Exception do |exception|
+    text_admin(exception.message)
+    raise exception
+  end
